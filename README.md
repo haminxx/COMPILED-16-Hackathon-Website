@@ -1,79 +1,79 @@
-# Freq
+# Freq 📻
+**Call a number before you fly. Freq tells you how high you can go, and calls out when to drop lower.**
 
-Marketing site and Google sign-in for Freq, a hands-free AI radio for drone pilots. Call before takeoff. An AI radio tells you how high you can fly — and when to come down — so your eyes never leave the sky.
+> Built at c0mpiled-16 UCSD · Dispatch track · "Invisible Interfaces"
+> Advisory only. Freq does not replace visual line of sight, LAANC authorization, or FAA rules.
 
-This repository is the website only. The voice line lives in a separate project. Freq is an advisory. It does not replace keeping your drone in visual line of sight or LAANC authorization.
+---
 
-Live site: [https://freq-ai.pages.dev](https://freq-ai.pages.dev)
+## Website
 
-## Scripts
+This repo is the landing site plus the Google sign-in dashboard: [freq-ai.pages.dev](https://freq-ai.pages.dev).
 
-```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # output: dist
-npm run preview
+## The problem
+Drones and manned aircraft share the same low sky, and the rules for that sky change block by block.
+
+- The FAA receives **100+ reports a month** of drones seen near airports (601 in Q2 2026).
+- In the Palisades fire, a hobby drone hit a firefighting aircraft. The pilot was ordered to pay **$146,765** in restitution.
+- Recreational pilots must stay under 400 ft, give way to manned aircraft, and get LAANC approval in controlled airspace. But the limit depends on the exact spot: in San Diego it can be 400 ft at La Jolla Cove, 400 ft only with LAANC at UTC, and **0 ft** a few blocks away near MCAS Miramar.
+
+**Pain point:** to know your real limit you have to read sectional charts or open an app, while both hands are on the controller and your eyes are on the drone.
+
+## Who it's for
+- **Hobbyist pilots** who passed the TRUST test but don't read airspace maps.
+- **Creators and influencers** flying for content near the coast, beaches, and cities, often near airports and bases.
+
+## The solution
+Freq is a **voice copilot on a phone call**. No app and no screen.
+
+1. The pilot calls the Freq number and says where they are, or shares phone location.
+2. Freq checks **FAA airspace data** for that exact point: airspace class, UAS Facility Map ceiling, and whether LAANC is required.
+3. Freq answers out loud: *"You're in Class G. You can fly up to 400 feet."* or *"This spot is 0 feet without approval. Don't fly here."*
+4. While the call stays open, Freq **watches nearby ADS-B traffic** and speaks up: *"Helicopter 2 miles north, low. Drop to 150 feet."*
+
+It's an invisible interface: the pilot's eyes never leave the drone.
+
+## Example (La Jolla demo route)
+| Spot | What Freq says |
+|---|---|
+| La Jolla Cove | Class G. Up to 400 ft. |
+| Torrey Pines Gliderport | Class G, 400 ft. Caution: paragliders don't broadcast ADS-B. |
+| UTC | Controlled airspace. Up to 400 ft **with LAANC**. |
+| Near MCAS Miramar | Ceiling 0. Do not fly. |
+| North Island | Class D, ceiling 0. Do not fly. |
+
+All values come from live FAA data, not hard-coded answers.
+
+## How it works
+```mermaid
+flowchart LR
+  P[Pilot's phone] -- calls --> V[Vapi voice agent<br/>OpenAI LLM]
+  V -- tool call / events --> B[Freq backend]
+  B --> F[FAA UAS Facility Map<br/>+ Class Airspace]
+  B --> A[Live ADS-B traffic]
+  B -- say / add-message --> V
+  V -- voice --> P
 ```
 
-Build at the repository root. There is no app subfolder.
+- **Voice:** Vapi phone number + OpenAI model (`gpt-4.1-mini`).
+- **Airspace:** FAA ArcGIS UAS Facility Map (ceiling, LAANC grid) checked first, then Class Airspace layers. Outside the grid, Class G at 400 ft AGL.
+- **Traffic loop:** every few seconds the backend checks nearby aircraft and pushes a spoken advisory into the live call.
+- **Web:** landing page and Google sign-in (Supabase), hosted on Cloudflare Pages.
 
-## Environment
+## What makes it different
+- **Hands-free, eyes-up.** Works by voice on any phone, mid-flight.
+- **Exact location, not a radius.** FAA grid cells are about 1 km, so Freq uses your precise coordinates.
+- **Tells you a number.** Not just "restricted," but how high you can go right now.
 
-Copy `.env.example` to `.env` for local sign-in. Leave the example file empty. Never commit real values. Do not put the Supabase service-role key in this repo.
+## Limits (honest list)
+- Advisory only; not collision avoidance and not FAA approved.
+- Only sees aircraft that broadcast ADS-B. Gliders, paragliders and some helicopters may not show up.
+- Uses the phone's location, not the drone's. Demo is scoped to San Diego / La Jolla.
 
-| Name | Purpose |
-| --- | --- |
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon (public) key |
-| `VITE_FREQ_PHONE` | E.164 number for the Call Freq `tel:` button |
+## What's next
+- Read the drone's own position (Remote ID / DJI telemetry) instead of the phone's.
+- One-tap LAANC request handoff.
+- Fixed caution zones for known non-ADS-B activity (gliderports, firefighting TFRs).
 
-Vite inlines `VITE_*` at build time. These three are already set on the Cloudflare Pages project. Changing them means a new Pages build.
-
-## Supabase Google sign-in
-
-Production Supabase project: `https://qruplsewiuefxqimmwpg.supabase.co`. The Google provider is enabled.
-
-1. In Google Cloud Console, create an OAuth client of type **Web application**.
-2. Authorized redirect URI (Google → Supabase, not the website):
-
-   `https://qruplsewiuefxqimmwpg.supabase.co/auth/v1/callback`
-
-3. In Supabase: Authentication → Providers → Google. Paste the Google client ID and client secret.
-4. Authentication → URL configuration:
-   - **Site URL:** `https://freq-ai.pages.dev`
-   - **Redirect URLs:** `https://freq-ai.pages.dev/**` and `http://localhost:5173/**`
-
-The site calls:
-
-```ts
-supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: { redirectTo: window.location.origin + "/dashboard" },
-});
-```
-
-That `redirectTo` must match the allow list. `/dashboard` without a session sends the browser back to `/`. The session is read with `getSession()` and `onAuthStateChange`.
-
-If the Google consent screen is in testing, add the pilot’s Google account as a test user. The consent screen privacy and terms links are:
-
-- `https://freq-ai.pages.dev/privacy`
-- `https://freq-ai.pages.dev/terms`
-
-## Cloudflare Pages
-
-Project: `freq-ai`. Production branch: `main`. Every push to `main` deploys to [https://freq-ai.pages.dev](https://freq-ai.pages.dev).
-
-| Setting | Value |
-| --- | --- |
-| Root directory | `/` (repository root) |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node | 22 (`.node-version`) |
-
-Environment variables, Production and Preview:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_FREQ_PHONE`
-
-`public/_redirects` contains `/* /index.html 200` so `/dashboard`, `/privacy`, and `/terms` load the SPA.
+## Team
+Christian Lee, UC San Diego
