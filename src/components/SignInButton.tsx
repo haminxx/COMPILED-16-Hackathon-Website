@@ -26,7 +26,15 @@ function GoogleMark() {
   );
 }
 
-export function SignInButton({ intent }: { intent: "nav" | "primary" }) {
+export function SignInButton({
+  intent,
+  className,
+  fullWidth = false,
+}: {
+  intent: "nav" | "primary";
+  className?: string;
+  fullWidth?: boolean;
+}) {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [pending, setPending] = useState(false);
@@ -58,14 +66,14 @@ export function SignInButton({ intent }: { intent: "nav" | "primary" }) {
           ? "Continuing…"
           : "Continue with Google";
 
-  const className =
+  const baseClass =
     intent === "nav"
       ? "inline-flex h-9 items-center rounded-full border border-white/15 px-3.5 text-sm text-white transition hover:bg-white/5 disabled:opacity-60"
       : "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-60 sm:w-auto";
 
   return (
-    <div className={intent === "primary" ? "w-full sm:w-auto" : undefined}>
-      <button type="button" className={className} onClick={onClick} disabled={pending}>
+    <div className={fullWidth ? "w-full" : intent === "primary" ? "w-full sm:w-auto" : undefined}>
+      <button type="button" className={className ?? baseClass} onClick={onClick} disabled={pending}>
         {intent === "primary" && !session ? <GoogleMark /> : null}
         {label}
       </button>

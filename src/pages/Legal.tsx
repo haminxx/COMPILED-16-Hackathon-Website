@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
-import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import FooterSection from "@/components/ui/footer";
+import { Navbar1 } from "@/components/ui/navbar-1";
 import { ADVISORY } from "@/lib/copy";
 
 function LegalPage({ title, children }: { title: string; children: ReactNode }) {
@@ -13,13 +14,13 @@ function LegalPage({ title, children }: { title: string; children: ReactNode }) 
 
   return (
     <div className="min-h-dvh bg-[#070708] text-white">
-      <SiteHeader />
+      <Navbar1 />
       <main className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
         <p className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">Freq</p>
         <h1 className="mt-3 text-4xl font-medium tracking-tight">{title}</h1>
         <div className="mt-8 space-y-4 text-sm leading-relaxed text-white/70">{children}</div>
       </main>
-      <SiteFooter />
+      <FooterSection />
     </div>
   );
 }
