@@ -145,6 +145,50 @@ body {
   transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgb(10 11 16 / 4%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(10 11 16 / 4%) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.dot-bg {
+  background-image: radial-gradient(rgb(255 255 255 / 55%) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.airspace-grid {
+  background-image:
+    linear-gradient(to right, rgb(0 64 255 / 8%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 64 255 / 8%) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.pulse-dot {
+  position: relative;
+}
+
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1px solid #0040ff;
+  opacity: 0.6;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
 .fact:hover .bar {
   transform: scaleX(1);
 }
@@ -159,7 +203,8 @@ body {
   .reveal-view,
   .fact,
   .fact .index,
-  .fact .bar {
+  .fact .bar,
+  .pulse-dot::after {
     animation: none;
     transition: none;
     opacity: 1;

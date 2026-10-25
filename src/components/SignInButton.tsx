@@ -30,10 +30,12 @@ export function SignInButton({
   intent,
   className,
   fullWidth = false,
+  wrapClassName,
 }: {
   intent: "nav" | "primary";
   className?: string;
   fullWidth?: boolean;
+  wrapClassName?: string;
 }) {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +74,12 @@ export function SignInButton({
       : "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[#0040FF] px-5 text-sm font-medium text-white transition hover:bg-[#0036d6] disabled:opacity-60 sm:w-auto";
 
   return (
-    <div className={fullWidth ? "w-full" : intent === "primary" ? "w-full sm:w-auto" : undefined}>
+    <div
+      className={
+        wrapClassName ??
+        (fullWidth ? "relative w-full" : intent === "primary" ? "relative w-full sm:w-auto" : "relative")
+      }
+    >
       <button type="button" className={className ?? baseClass} onClick={onClick} disabled={pending}>
         {intent === "primary" && !session ? <GoogleMark /> : null}
         {label}
@@ -80,7 +87,7 @@ export function SignInButton({
       {error ? (
         <p
           role="alert"
-          className="mt-3 max-w-sm rounded-xl border border-[#e6e8ee] bg-[#f7f8fa] px-3 py-2 text-left text-xs leading-relaxed text-[#121417]"
+          className="absolute top-full right-0 z-50 mt-2 w-64 border border-[#e6e8ee] bg-white px-3 py-2 text-left text-xs leading-relaxed text-[#121417] shadow-sm"
         >
           {error}
         </p>
