@@ -66,10 +66,10 @@ function Desk({ name, avatar }: { name: string; avatar?: string }) {
 
   return (
     <div className="min-h-dvh bg-white text-[#121417]">
-      <header className="sticky top-0 z-20 border-b border-[#e6e8ee] bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-xl items-center gap-3 px-4 sm:px-5">
-          <Link to="/" className="text-[#0040FF]" aria-label="Freq home">
-            <FreqWordmark className="h-6 w-auto" />
+      <header className="sticky top-0 z-20 border-b border-[#c8ced8] bg-white">
+        <div className="mx-auto flex h-16 max-w-xl items-center gap-3 px-4 sm:px-5">
+          <Link to="/" aria-label="Freq home">
+            <FreqWordmark className="h-8 w-auto" />
           </Link>
           <div className="ml-auto flex items-center gap-3">
             {avatar && photoOk ? (
@@ -85,7 +85,7 @@ function Desk({ name, avatar }: { name: string; avatar?: string }) {
             <button
               type="button"
               onClick={() => void supabase.auth.signOut()}
-              className="rounded-full border border-[#d7dbe3] px-3 py-1.5 text-sm text-[#121417] transition hover:border-[#0040FF] hover:text-[#0040FF]"
+              className="inline-flex h-10 items-center justify-center border border-[#121417] bg-white px-4 text-sm font-medium transition hover:bg-[#f4f6f8]"
             >
               Sign out
             </button>

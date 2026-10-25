@@ -17,13 +17,13 @@ export default function FooterSection() {
         <motion.a
           href="/"
           aria-label="Freq home"
-          className="mx-auto flex w-fit text-[#0040FF]"
+          className="mx-auto flex w-fit"
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45 }}
         >
-          <FreqWordmark className="h-7 w-auto" />
+          <FreqWordmark className="h-9 w-auto" />
         </motion.a>
 
         <p className="mx-auto mt-4 max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
