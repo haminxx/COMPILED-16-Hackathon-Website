@@ -113,12 +113,51 @@ async function liveLines(env: DemoEnv, callId: string): Promise<TranscriptLine[]
   }
 }
 
+const ACTIVITY_TOOL = {
+  type: "function",
+  function: {
+    name: "get_nearby_activities",
+    description: "Official scheduled activity near the pilot: TFRs, military or restricted airspace, and stadiums. Call this when asked what is scheduled or happening nearby.",
+    parameters: { type: "object", properties: {}, required: [] },
+  },
+};
+
 async function enableLiveTranscripts(env: DemoEnv): Promise<void> {
   if (!env.VAPI_ASSISTANT_ID) return;
-  await vapi(env, `/assistant/${env.VAPI_ASSISTANT_ID}`, {
-    method: "PATCH",
-    body: JSON.stringify({ serverMessages: LIVE_MESSAGES }),
-  }).catch(() => undefined);
+  try {
+    const currentRes = await vapi(env, `/assistant/${env.VAPI_ASSISTANT_ID}`);
+    const current = (await currentRes.json().catch(() => null)) as { model?: { provider?: string; model?: string; messages?: unknown[]; tools?: { function?: { name?: string } }[]; temperature?: number } } | null;
+    const model = current?.model;
+    const tools = Array.isArray(model?.tools) ? model.tools.slice() : [];
+    if (!tools.some((tool) => tool?.function?.name === "get_nearby_activities")) tools.push(ACTIVITY_TOOL);
+    const kept = (Array.isArray(model?.messages) ? model.messages : []).filter(
+      (item) => (item as { role?: string })?.role !== "system",
+    );
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are Freq, on a phone call with a drone pilot. Speak in at most two short sentences. Use feet and statute miles. Lead with nearby aircraft: type, distance, direction, altitude, and how long until one reaches the pilot's area when the tool includes a time. Do not say you are advisory, unofficial, not air traffic control, or that you do not replace a visual observer. Call get_situation first and speak its aircraft lines. The phone location is already saved. Mention the ceiling only if they ask how high they can fly. If they ask what is scheduled nearby, call get_nearby_activities.",
+      },
+      ...kept,
+    ];
+    const patch: Record<string, unknown> = {
+      serverMessages: LIVE_MESSAGES,
+      firstMessage: "Freq on. Checking the aircraft near you.",
+    };
+    if (model?.provider && model.model) {
+      patch.model = {
+        provider: model.provider,
+        model: model.model,
+        messages,
+        tools,
+        ...(typeof model.temperature === "number" ? { temperature: model.temperature } : {}),
+      };
+    }
+    await vapi(env, `/assistant/${env.VAPI_ASSISTANT_ID}`, { method: "PATCH", body: JSON.stringify(patch) });
+  } catch {
+    // The call can still be placed. Location was already saved.
+  }
 }
 
 export async function handleDemoLoc(request: Request, env: DemoEnv): Promise<Response> {
@@ -174,6 +213,12 @@ export async function handleDemoCall(request: Request, env: DemoEnv): Promise<Re
         assistantId: env.VAPI_ASSISTANT_ID,
         phoneNumberId: env.VAPI_PHONE_NUMBER_ID,
         customer: { number: to },
+        metadata: {
+          lat: String(point.lat),
+          lon: String(point.lon),
+          accuracy: point.accuracy == null ? "" : String(point.accuracy),
+          source: "phone",
+        },
       }),
     });
     const payload = (await created.json().catch(() => ({}))) as { id?: string; message?: string; status?: string };
