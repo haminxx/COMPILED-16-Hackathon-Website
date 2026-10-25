@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { VoiceBeam } from "voice-glow";
 
@@ -17,14 +17,25 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [call, setCall] = useState<CallState | null>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
       setPending(false);
       setError(null);
       setCall(null);
+      return;
     }
-  }, [open]);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const focusTimer = window.setTimeout(() => phoneRef.current?.focus(), 30);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(focusTimer);
+    };
+  }, [open, onClose]);
 
   useEffect(() => {
     if (!open || !call?.callId) return;
@@ -99,7 +110,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
             role="dialog"
             aria-modal="true"
             aria-labelledby="demo-title"
-            className="w-full max-w-lg rounded-2xl border border-[#e6e8ee] bg-white p-5 shadow-2xl sm:p-6"
+            className="w-full max-w-lg border border-[#E6E6E8] bg-white p-5 shadow-[0_16px_48px_rgba(18,20,23,0.16)] sm:p-6"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12 }}
@@ -157,6 +168,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
                   Your phone number
                 </label>
                 <input
+                  ref={phoneRef}
                   id="demo-phone"
                   type="tel"
                   inputMode="tel"

@@ -112,20 +112,28 @@ export default function Landing() {
           </GridBeam>
         </section>
 
-        <section aria-label="Why this exists" className="border-y border-[#e6e8ee] bg-white">
-          <div className="mx-auto grid max-w-6xl gap-4 px-5 py-10 md:grid-cols-3 md:px-6">
-            {FACTS.map((fact, index) => (
-              <motion.p
-                key={index}
-                className="reveal-view rounded-xl border border-[#e6e8ee] bg-white p-6 text-sm leading-relaxed text-[#3c4450] shadow-sm"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.5, delay: index * 0.08, ease }}
-              >
-                {fact}
-              </motion.p>
-            ))}
+        <section aria-label="Why this exists" className="border-y border-[#E6E6E8] bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+            <div className="mb-10 flex items-end justify-between">
+              <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Three things worth knowing first.</h2>
+              <span className="hidden font-mono text-[11px] tracking-[0.18em] text-[#6B6B70] uppercase md:inline">Facts</span>
+            </div>
+            <div className="grid grid-cols-1 gap-px border border-[#E6E6E8] bg-[#E6E6E8] md:grid-cols-3">
+              {FACTS.map((fact, index) => (
+                <motion.article
+                  key={index}
+                  className="fact relative bg-white p-8 md:p-10"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.4 }}
+                  transition={{ duration: 0.5, delay: index * 0.08, ease }}
+                >
+                  <span className="index font-mono text-xs text-[#6B6B70]">{String(index + 1).padStart(2, "0")} / 03</span>
+                  <p className="mt-8 text-sm leading-relaxed text-[#3c4450]">{fact}</p>
+                  <div className="bar mt-8 h-px w-full bg-[#0040FF]" />
+                </motion.article>
+              ))}
+            </div>
           </div>
         </section>
 

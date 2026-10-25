@@ -15,10 +15,13 @@ function LegalPage({ title, children }: { title: string; children: ReactNode }) 
   return (
     <div className="min-h-dvh bg-white text-[#121417]">
       <Navbar1 />
-      <main className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
-        <p className="font-mono text-[11px] tracking-[0.18em] text-[#0040FF] uppercase">Freq</p>
+      <main className="mx-auto max-w-2xl px-5 py-16 sm:px-8 sm:py-24">
+        <p className="font-mono text-[11px] tracking-[0.18em] text-[#6B6B70] uppercase">Freq</p>
         <h1 className="mt-3 text-4xl font-medium tracking-tight">{title}</h1>
-        <div className="mt-8 space-y-4 text-sm leading-relaxed text-[#3c4450]">{children}</div>
+        <div className="mt-8 border-t border-[#E6E6E8] pt-8">
+          <div className="space-y-4 text-sm leading-relaxed text-[#3c4450]">{children}</div>
+          <p className="mt-10 border-t border-[#E6E6E8] pt-6 text-sm leading-relaxed text-[#121417]">{ADVISORY}</p>
+        </div>
       </main>
       <FooterSection />
     </div>

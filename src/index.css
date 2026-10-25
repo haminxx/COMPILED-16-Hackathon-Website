@@ -123,6 +123,32 @@ body {
   outline-offset: 3px;
 }
 
+.fact {
+  transition: border-color 0.3s ease;
+}
+
+.fact:hover {
+  border-color: #121417;
+}
+
+.fact .index {
+  transition: color 0.3s ease;
+}
+
+.fact:hover .index {
+  color: #0040ff;
+}
+
+.fact .bar {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.fact:hover .bar {
+  transform: scaleX(1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -130,8 +156,12 @@ body {
 
   .animate-spotlight,
   .reveal,
-  .reveal-view {
+  .reveal-view,
+  .fact,
+  .fact .index,
+  .fact .bar {
     animation: none;
+    transition: none;
     opacity: 1;
     transform: none;
   }
