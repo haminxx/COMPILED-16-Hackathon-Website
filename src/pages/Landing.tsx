@@ -154,11 +154,7 @@ export default function Landing() {
           <div className="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_75%)]" />
           <div className="relative mx-auto grid max-w-[1240px] items-center gap-14 px-5 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease }}>
-              <p className="inline-flex h-8 items-center gap-2 rounded-full border border-[#E7E9EE] bg-white px-3 font-mono text-[12.5px] text-[#6B7280]">
-                <span className="pulse-dot inline-flex h-2 w-2 rounded-full bg-[#0040FF]" aria-hidden />
-                Hands-free AI radio
-              </p>
-              <h1 className="mt-6 text-[44px] leading-[1.02] font-semibold tracking-[-0.03em] sm:text-[64px] lg:text-[72px]">
+              <h1 className="text-[44px] leading-[1.02] font-semibold tracking-[-0.03em] sm:text-[64px] lg:text-[72px]">
                 {heroLead}
                 {heroRest ? (
                   <>
