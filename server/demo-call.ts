@@ -2,14 +2,17 @@ export type DemoEnv = {
   VAPI_API_KEY?: string;
   VAPI_ASSISTANT_ID?: string;
   VAPI_PHONE_NUMBER_ID?: string;
+  FREQ_BACKEND_URL?: string;
 };
 
 export type TranscriptLine = {
   role: "agent" | "caller";
   text: string;
+  partial?: boolean;
 };
 
 const REQUIRED = ["VAPI_API_KEY", "VAPI_ASSISTANT_ID", "VAPI_PHONE_NUMBER_ID"] as const;
+const LIVE_MESSAGES = ["tool-calls", "status-update", "end-of-call-report", "transcript", "conversation-update"];
 
 export function missingDemoEnv(env: DemoEnv): string[] {
   return REQUIRED.filter((key) => !env[key]?.trim());
@@ -31,19 +34,34 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function linesFromCall(call: Record<string, unknown>): TranscriptLine[] {
-  const artifact = call.artifact as { messages?: unknown } | undefined;
-  const raw = (Array.isArray(artifact?.messages) ? artifact.messages : null) ?? (Array.isArray(call.messages) ? call.messages : []);
+function asLines(raw: unknown): TranscriptLine[] {
+  if (!Array.isArray(raw)) return [];
   const lines: TranscriptLine[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
-    const message = item as { role?: string; message?: string; content?: string };
-    const text = (message.message ?? message.content ?? "").trim();
+    const message = item as { role?: string; message?: string; content?: string; text?: string; partial?: boolean };
+    const text = (message.message ?? message.content ?? message.text ?? "").trim();
     if (!text) continue;
-    if (message.role === "bot" || message.role === "assistant") lines.push({ role: "agent", text });
-    else if (message.role === "user") lines.push({ role: "caller", text });
+    const role = message.role === "bot" || message.role === "assistant" || message.role === "agent" ? "agent" : message.role === "user" || message.role === "caller" ? "caller" : null;
+    if (!role) continue;
+    lines.push({ role, text, ...(message.partial ? { partial: true } : {}) });
   }
   return lines;
+}
+
+function linesFromCall(call: Record<string, unknown>): TranscriptLine[] {
+  const artifact = call.artifact as { messages?: unknown } | undefined;
+  const fromArtifact = asLines(artifact?.messages);
+  const fromCall = asLines(call.messages);
+  return score(fromCall) > score(fromArtifact) ? fromCall : fromArtifact;
+}
+
+function score(lines: TranscriptLine[]): number {
+  return lines.reduce((total, line) => total + line.text.length, 0) + lines.length * 8;
+}
+
+function richer(a: TranscriptLine[], b: TranscriptLine[]): TranscriptLine[] {
+  return score(b) > score(a) ? b : a;
 }
 
 async function vapi(env: DemoEnv, path: string, init?: RequestInit): Promise<Response> {
@@ -55,6 +73,69 @@ async function vapi(env: DemoEnv, path: string, init?: RequestInit): Promise<Res
       ...(init?.headers ?? {}),
     },
   });
+}
+
+function coords(body: { lat?: number; lon?: number; accuracy?: number }): { lat: number; lon: number; accuracy: number | null } | null {
+  const lat = Number(body.lat);
+  const lon = Number(body.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const accuracy = Number(body.accuracy);
+  return { lat, lon, accuracy: Number.isFinite(accuracy) ? accuracy : null };
+}
+
+async function saveLocation(env: DemoEnv, phone: string, point: { lat: number; lon: number; accuracy: number | null }): Promise<string | null> {
+  const base = env.FREQ_BACKEND_URL?.trim().replace(/\/$/, "");
+  if (!base) return "Phone location server is not configured.";
+  try {
+    const response = await fetch(`${base}/api/loc`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ phone, lat: point.lat, lon: point.lon, accuracy: point.accuracy }),
+    });
+    if (!response.ok) return "Freq couldn't save this phone's location.";
+  } catch {
+    return "Freq couldn't reach the location server.";
+  }
+  return null;
+}
+
+async function liveLines(env: DemoEnv, callId: string): Promise<TranscriptLine[]> {
+  const base = env.FREQ_BACKEND_URL?.trim().replace(/\/$/, "");
+  if (!base) return [];
+  try {
+    const response = await fetch(`${base}/api/live?id=${encodeURIComponent(callId)}`);
+    const data = (await response.json().catch(() => null)) as { lines?: unknown } | null;
+    if (!response.ok || !data) return [];
+    return asLines(data.lines);
+  } catch {
+    return [];
+  }
+}
+
+async function enableLiveTranscripts(env: DemoEnv): Promise<void> {
+  if (!env.VAPI_ASSISTANT_ID) return;
+  await vapi(env, `/assistant/${env.VAPI_ASSISTANT_ID}`, {
+    method: "PATCH",
+    body: JSON.stringify({ serverMessages: LIVE_MESSAGES }),
+  }).catch(() => undefined);
+}
+
+export async function handleDemoLoc(request: Request, env: DemoEnv): Promise<Response> {
+  if (request.method !== "POST") return json({ ok: false, error: "POST only" }, 405);
+  let body: { to?: string; lat?: number; lon?: number; accuracy?: number };
+  try {
+    body = (await request.json()) as { to?: string; lat?: number; lon?: number; accuracy?: number };
+  } catch {
+    return json({ ok: false, error: "Send the phone number and location." }, 400);
+  }
+  const to = toE164(body.to ?? "");
+  const point = coords(body);
+  if (!to) return json({ ok: false, error: "Enter a phone number, with country code or a 10-digit US number." }, 400);
+  if (!point) return json({ ok: false, error: "Phone location is missing." }, 400);
+  const error = await saveLocation(env, to, point);
+  if (error) return json({ ok: false, error }, 502);
+  return json({ ok: true });
 }
 
 export async function handleDemoCall(request: Request, env: DemoEnv): Promise<Response> {
@@ -70,16 +151,23 @@ export async function handleDemoCall(request: Request, env: DemoEnv): Promise<Re
   }
 
   if (request.method === "POST") {
-    let body: { to?: string };
+    let body: { to?: string; lat?: number; lon?: number; accuracy?: number };
     try {
-      body = (await request.json()) as { to?: string };
+      body = (await request.json()) as { to?: string; lat?: number; lon?: number; accuracy?: number };
     } catch {
       return json({ ok: false, error: "Send a JSON body with the visitor’s phone number." }, 400);
     }
     const to = toE164(body.to ?? "");
+    const point = coords(body);
     if (!to) {
       return json({ ok: false, error: "Enter a phone number, with country code or a 10-digit US number." }, 400);
     }
+    if (!point) {
+      return json({ ok: false, error: "Allow location so Freq knows where this phone is." }, 400);
+    }
+    const saved = await saveLocation(env, to, point);
+    if (saved) return json({ ok: false, error: saved }, 502);
+    await enableLiveTranscripts(env);
     const created = await vapi(env, "/call", {
       method: "POST",
       body: JSON.stringify({
@@ -101,9 +189,9 @@ export async function handleDemoCall(request: Request, env: DemoEnv): Promise<Re
   if (request.method === "GET") {
     const id = new URL(request.url).searchParams.get("id") ?? "";
     if (!/^[A-Za-z0-9-]{8,80}$/.test(id)) return json({ ok: false, error: "Missing call id." }, 400);
-    const read = await vapi(env, `/call/${id}`);
+    const [read, live] = await Promise.all([vapi(env, `/call/${id}`), liveLines(env, id)]);
     const call = (await read.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!read.ok) {
+    if (!read.ok && live.length === 0) {
       const message = typeof call.message === "string" ? call.message : "Could not read the call.";
       return json({ ok: false, error: message }, read.status || 502);
     }
@@ -111,7 +199,7 @@ export async function handleDemoCall(request: Request, env: DemoEnv): Promise<Re
       ok: true,
       callId: id,
       status: typeof call.status === "string" ? call.status : "",
-      lines: linesFromCall(call),
+      lines: richer(linesFromCall(call), live),
     });
   }
 
