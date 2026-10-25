@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Eye, LogIn, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,10 +66,14 @@ export default function HowItWorks01() {
         </div>
 
         <ol className="mt-14 grid gap-6 sm:grid-cols-3">
-          {steps.map((s) => (
-            <li
+          {steps.map((s, index) => (
+            <motion.li
               key={s.n}
               className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm shadow-black/5 sm:p-6"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="flex items-center justify-between">
                 <span className="grid size-10 place-items-center rounded-xl bg-foreground/5 text-foreground">
@@ -80,7 +85,7 @@ export default function HowItWorks01() {
               </div>
               <h3 className="text-lg font-semibold tracking-tight">{s.title}</h3>
               <p className="text-sm text-muted-foreground">{s.body}</p>
-            </li>
+            </motion.li>
           ))}
         </ol>
 

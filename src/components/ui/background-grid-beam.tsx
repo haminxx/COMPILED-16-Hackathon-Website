@@ -49,10 +49,10 @@ export const Beam = () => {
             repeatDelay: 2,
           }}
         >
-          <stop stopColor="#18CCFC" stopOpacity="0" />
-          <stop stopColor="#18CCFC" />
-          <stop offset="0.325" stopColor="#6344F5" />
-          <stop offset="1" stopColor="#AE48FF" stopOpacity="0" />
+          <stop stopColor="#0040FF" stopOpacity="0" />
+          <stop stopColor="#0040FF" />
+          <stop offset="0.325" stopColor="#3D6BFF" />
+          <stop offset="1" stopColor="#0040FF" stopOpacity="0" />
         </motion.linearGradient>
       </defs>
     </svg>

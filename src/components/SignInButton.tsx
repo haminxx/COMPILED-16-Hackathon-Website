@@ -59,7 +59,7 @@ export function SignInButton({
     intent === "nav"
       ? session
         ? "Dashboard"
-        : "Sign in"
+        : "Sign up"
       : session
         ? "Go to dashboard"
         : pending
@@ -68,8 +68,8 @@ export function SignInButton({
 
   const baseClass =
     intent === "nav"
-      ? "inline-flex h-9 items-center rounded-full border border-white/15 px-3.5 text-sm text-white transition hover:bg-white/5 disabled:opacity-60"
-      : "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-60 sm:w-auto";
+      ? "inline-flex h-10 items-center rounded-md border border-[#d5d9e2] bg-white px-3.5 text-sm font-medium text-[#121417] transition hover:border-[#0040FF] hover:text-[#0040FF] disabled:opacity-60"
+      : "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[#0040FF] px-5 text-sm font-medium text-white transition hover:bg-[#0036d6] disabled:opacity-60 sm:w-auto";
 
   return (
     <div className={fullWidth ? "w-full" : intent === "primary" ? "w-full sm:w-auto" : undefined}>
@@ -80,7 +80,7 @@ export function SignInButton({
       {error ? (
         <p
           role="alert"
-          className="mt-3 max-w-sm rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-left text-xs leading-relaxed text-white/80"
+          className="mt-3 max-w-sm rounded-xl border border-[#e6e8ee] bg-[#f7f8fa] px-3 py-2 text-left text-xs leading-relaxed text-[#121417]"
         >
           {error}
         </p>

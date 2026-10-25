@@ -13,12 +13,12 @@ function LegalPage({ title, children }: { title: string; children: ReactNode }) 
   }, [title]);
 
   return (
-    <div className="min-h-dvh bg-[#070708] text-white">
+    <div className="min-h-dvh bg-white text-[#121417]">
       <Navbar1 />
       <main className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
-        <p className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">Freq</p>
+        <p className="font-mono text-[11px] tracking-[0.18em] text-[#0040FF] uppercase">Freq</p>
         <h1 className="mt-3 text-4xl font-medium tracking-tight">{title}</h1>
-        <div className="mt-8 space-y-4 text-sm leading-relaxed text-white/70">{children}</div>
+        <div className="mt-8 space-y-4 text-sm leading-relaxed text-[#3c4450]">{children}</div>
       </main>
       <FooterSection />
     </div>

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, X } from "lucide-react";
+import { FreqWordmark } from "@/components/FreqWordmark";
 import { SignInButton } from "@/components/SignInButton";
+import { useDemo } from "@/lib/demo";
 
 const LINKS = [
   { label: "How it works", href: "/#how" },
@@ -11,114 +13,79 @@ const LINKS = [
   { label: "Safety", href: "/#safety" },
 ];
 
-const signInClass =
-  "inline-flex h-9 items-center justify-center rounded-full bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-60";
+const signUpClass =
+  "inline-flex h-10 items-center justify-center rounded-md border border-[#d5d9e2] bg-white px-3.5 text-sm font-medium text-[#121417] transition hover:border-[#0040FF] hover:text-[#0040FF] disabled:opacity-60";
 
 const Navbar1 = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const { openDemo } = useDemo();
 
   return (
-    <div className="sticky top-0 z-40 flex w-full justify-center px-4 py-4">
-      <div className="relative z-10 flex w-full max-w-3xl items-center justify-between rounded-full border border-white/10 bg-black/60 px-5 py-3 shadow-lg backdrop-blur-md">
-        <a href="/" className="inline-flex items-center gap-2 text-sm font-medium tracking-tight text-white">
-          <motion.span
-            className="h-1.5 w-1.5 rounded-full bg-[#e8ff1f]"
-            aria-hidden
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
-          />
-          Freq
-        </a>
-
-        <nav className="hidden items-center space-x-8 md:flex" aria-label="Sections">
-          {LINKS.map((item) => (
-            <motion.div
-              key={item.href}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              whileHover={{ scale: 1.05 }}
-            >
-              <a href={item.href} className="text-sm font-medium text-white/80 transition-colors hover:text-white">
+    <motion.header
+      className="sticky top-0 z-40 border-b border-[#e7e9ef] bg-white/90 backdrop-blur-md"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="mx-auto flex h-[72px] max-w-6xl items-center gap-3 px-4 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center rounded-full border border-[#e4e7ee] bg-white shadow-[0_1px_2px_rgba(18,20,23,0.05)]">
+          <a href="/" className="flex items-center px-3 py-2 text-[#0040FF] sm:px-4" aria-label="Freq home">
+            <FreqWordmark className="h-6 w-auto sm:h-7" />
+          </a>
+          <nav className="hidden items-center gap-1 pr-2 md:flex" aria-label="Sections">
+            {LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-3 py-2 text-sm font-medium text-[#121417] transition hover:text-[#0040FF]"
+              >
                 {item.label}
               </a>
-            </motion.div>
-          ))}
-        </nav>
-
-        <motion.div
-          className="hidden md:block"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          whileHover={{ scale: 1.05 }}
-        >
-          <SignInButton intent="nav" className={signInClass} />
-        </motion.div>
-
-        <motion.button
-          type="button"
-          className="flex items-center md:hidden"
-          onClick={toggleMenu}
-          whileTap={{ scale: 0.9 }}
-          aria-label="Open menu"
-        >
-          <Menu className="h-6 w-6 text-white" />
-        </motion.button>
-      </div>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 bg-black/95 px-6 pt-24 md:hidden"
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            ))}
+          </nav>
+          <button
+            type="button"
+            className="mr-2 ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full text-[#121417] md:hidden"
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            onClick={() => setIsOpen((value) => !value)}
           >
-            <motion.button
-              type="button"
-              className="absolute top-6 right-6 p-2"
-              onClick={toggleMenu}
-              whileTap={{ scale: 0.9 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              aria-label="Close menu"
-            >
-              <X className="h-6 w-6 text-white" />
-            </motion.button>
-            <div className="flex flex-col space-y-6">
-              {LINKS.map((item, i) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 + 0.1 }}
-                  exit={{ opacity: 0, x: 20 }}
-                >
-                  <a href={item.href} className="text-base font-medium text-white" onClick={toggleMenu}>
-                    {item.label}
-                  </a>
-                </motion.div>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="pt-6"
-                onClick={toggleMenu}
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <SignInButton intent="nav" className={signUpClass} />
+          <button
+            type="button"
+            onClick={openDemo}
+            className="inline-flex h-10 items-center justify-center rounded-md bg-[#0040FF] px-3.5 text-sm font-medium text-white transition hover:bg-[#0036d6]"
+          >
+            Demo
+          </button>
+        </div>
+      </div>
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.nav
+            className="border-t border-[#e7e9ef] bg-white px-4 py-3 md:hidden"
+            aria-label="Sections"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            {LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className="block py-2 text-sm font-medium text-[#121417] hover:text-[#0040FF]"
               >
-                <SignInButton intent="nav" className={`${signInClass} w-full`} />
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
+                {item.label}
+              </a>
+            ))}
+          </motion.nav>
+        ) : null}
       </AnimatePresence>
-    </div>
+    </motion.header>
   );
 };
 

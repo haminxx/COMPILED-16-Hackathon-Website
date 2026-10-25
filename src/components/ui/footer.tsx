@@ -1,3 +1,5 @@
+import { motion } from "motion/react";
+import { FreqWordmark } from "@/components/FreqWordmark";
 import { ADVISORY } from "@/lib/copy";
 
 const links = [
@@ -12,10 +14,17 @@ export default function FooterSection() {
   return (
     <footer className="border-t border-border py-16 md:py-24">
       <div className="mx-auto max-w-5xl px-6">
-        <a href="/" aria-label="Freq home" className="mx-auto flex w-fit items-center gap-2 text-sm font-medium text-white">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#e8ff1f]" aria-hidden />
-          Freq
-        </a>
+        <motion.a
+          href="/"
+          aria-label="Freq home"
+          className="mx-auto flex w-fit text-[#0040FF]"
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <FreqWordmark className="h-7 w-auto" />
+        </motion.a>
 
         <p className="mx-auto mt-4 max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
           Hands-free AI radio for drone pilots. c0mpiled-16 · UCSD · Invisible Interfaces.
@@ -23,7 +32,7 @@ export default function FooterSection() {
 
         <nav className="my-8 flex flex-wrap justify-center gap-6 text-sm" aria-label="Footer">
           {links.map((link) => (
-            <a key={link.href} href={link.href} className="block text-muted-foreground duration-150 hover:text-primary">
+            <a key={link.href} href={link.href} className="block text-[#5c6570] transition duration-150 hover:text-[#0040FF]">
               <span>{link.title}</span>
             </a>
           ))}

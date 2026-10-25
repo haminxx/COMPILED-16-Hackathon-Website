@@ -1,7 +1,7 @@
 import { SignInButton } from "@/components/SignInButton";
 
 const googleButtonClass =
-  "inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60 disabled:opacity-60";
+  "inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[#0040FF] px-4 text-sm font-medium text-white transition hover:bg-[#0036d6] disabled:opacity-60";
 
 export default function Login16() {
   return (
