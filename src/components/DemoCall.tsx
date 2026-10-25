@@ -4,7 +4,7 @@ import { VoiceBeam } from "voice-glow";
 
 const BRAND = ["#0040FF", "#3D6BFF", "#002DB3", "#7AA0FF", "#001A66"];
 
-type Line = { role: "agent" | "caller"; text: string };
+type Line = { role: "agent" | "caller"; text: string; partial?: boolean };
 
 type CallState = {
   callId: string;
@@ -17,6 +17,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [call, setCall] = useState<CallState | null>(null);
+  const [dialed, setDialed] = useState("");
   const phoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -56,27 +57,69 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
             : current,
         );
         if (data.status === "ended") return;
-        timer = window.setTimeout(() => void pull(), 2000);
+        timer = window.setTimeout(() => void pull(), 400);
       } catch {
         if (!stop) setError("Could not reach /api/demo-call.");
       }
     };
-    timer = window.setTimeout(() => void pull(), 1200);
+    timer = window.setTimeout(() => void pull(), 250);
     return () => {
       stop = true;
       window.clearTimeout(timer);
     };
   }, [open, call?.callId]);
 
+  useEffect(() => {
+    if (!open || !call?.callId || !dialed || !navigator.geolocation) return;
+    let last = 0;
+    const watch = navigator.geolocation.watchPosition((position) => {
+      const now = Date.now();
+      if (now - last < 2000) return;
+      last = now;
+      void fetch("/api/demo-loc", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          to: dialed,
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        }),
+      });
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 1000 });
+    return () => navigator.geolocation.clearWatch(watch);
+  }, [open, call?.callId, dialed]);
+
+  function readPosition(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("This browser can't share location."));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, (err) => {
+        if (err.code === err.PERMISSION_DENIED) reject(new Error("Allow location so Freq knows where this phone is."));
+        else if (err.code === err.TIMEOUT) reject(new Error("Couldn't read this phone's location. Try again."));
+        else reject(new Error("Couldn't read this phone's location."));
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    });
+  }
+
   async function placeCall(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setPending(true);
     try {
+      const position = await readPosition();
+      setDialed(phone);
       const response = await fetch("/api/demo-call", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ to: phone }),
+        body: JSON.stringify({
+          to: phone,
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        }),
       });
       const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; callId?: string; status?: string } | null;
       if (!response.ok || !data?.callId) {
@@ -89,8 +132,8 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
         return;
       }
       setCall({ callId: data.callId, status: data.status ?? "queued", lines: [] });
-    } catch {
-      setError("Could not reach /api/demo-call. Outbound calls need VAPI_API_KEY, VAPI_ASSISTANT_ID, and VAPI_PHONE_NUMBER_ID on the server.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reach /api/demo-call.");
     } finally {
       setPending(false);
     }
@@ -132,7 +175,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
             {call ? (
               <div className="mt-5">
                 <p className="mb-3 text-sm text-[#5c6570]">
-                  Freq is calling the number you entered. This panel only shows words that have actually arrived.
+                  Freq is calling the number you entered. Words show up as they are spoken.
                   {call.status ? ` Status: ${call.status}.` : ""}
                 </p>
                 <VoiceBeam theme="light" colors={BRAND} type="default">
@@ -149,7 +192,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
                               {line.role === "agent" ? "Freq" : "Caller"}
                             </span>
                             {": "}
-                            <span className="text-[#121417]">{line.text}</span>
+                            <span className={line.partial ? "text-[#5c6570]" : "text-[#121417]"}>{line.text}</span>
                           </li>
                         ))}
                       </ol>
@@ -180,7 +223,7 @@ export function DemoCall({ open, onClose }: { open: boolean; onClose: () => void
                   className="mt-2 h-12 w-full rounded-xl border border-[#d7dbe3] px-3 text-base text-[#121417] outline-none focus:border-[#0040FF]"
                 />
                 <p className="mt-2 text-xs leading-relaxed text-[#5c6570]">
-                  Freq places the call to this number. The conversation stays on your phone.
+                  Freq uses this phone's location, then calls this number. Allow location when the browser asks.
                 </p>
                 <button
                   type="submit"
